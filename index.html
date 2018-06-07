@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>G.O.A.T.S - Global Outage Alert Twitter System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+   integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+   crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+   integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+   crossorigin=""></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        #map { height: 590px;
+               width:  800px;
+               margin: auto}
+        .info { padding: 6px 8px;
+                font: 14px/16px Arial, Helvetica, sans-serif;
+                background: white;
+                background: rgba(255,255,255,0.8);
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                border-radius: 5px; }
+        .info h4 { margin: 0 0 5px;
+                   color: #777; }
+        #scrollbox { height: 590px;
+                     width:  500px;
+                     padding-bottom: 10px;
+                     border: 3px solid black;
+                    }
+        #applogo {
+            height: 100px;
+            padding-left: 50px;
+        }
+        #corplogo {
+            height: 30px;
+            padding-left: 50px;
+        }
+    </style>
+</head>
+<body>
+    <table style="width: 1524px;">
+<tbody>
+    <tr style="height: 156px;">
+        <td style="width: 15px; height: 56px;"></td>
+        <td style="width: 521px; height: 56px;"></td>
+        <td style="width: 74px; height: 56px;"></td>
+        <td style="width: 805px; height: 56px;"></td>
+        <td style="width: 78px; height: 56px;">
+            <img id='corplogo' src="https://www.ecmholdinggroup.com/images/Constellation_Brandmark_CMYK.jpg"/>
+            <img id='applogo' src="http://static1.squarespace.com/static/54ce4ecae4b0ffd1402f2e15/t/561443ade4b0f9222d2d1092/1444168624556/jpg_goat_favicon.png?format=1000w"/>
+        </td>
+    </tr>
+
+    <tr style="height: 600px;">
+        <td style="width: 15px; height: 600px;"></td>
+        <td style="width: 521px; height: 600px;">
+            <div id='scrollbox'></div>
+        </td>
+        <td style="width: 74px; height: 600px;"></td>
+        <td style="width: 805px; height: 600px;">
+            <div id="map"></div>
+        </td>
+        <td style="width: 78px; height: 600px;"></td>
+    </tr>
+
+    <tr style="height: 21px;">
+        <td style="width: 15px; height: 71px;"></td>
+        <td style="width: 521px; height: 71px;"></td>
+        <td style="width: 74px; height: 71px;"></td>
+        <td style="width: 805px; height: 71px;"></td>
+        <td style="width: 78px; height: 71px;"></td>
+    </tr>
+</tbody>
+</table>
+        <script type="text/javascript" src="/static/js/texas-counties.js"></script>
+        <script>
+            var map = L.map('map').setView([32.2886, -100.7373], 5);
+            map.setMaxBounds(map.getBounds().pad(.05));
+            map.setView([32.2886, -100.7373], 5);
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                id: 'mapbox.streets-satellite',
+                accessToken: 'pk.eyJ1IjoiYWFyb25icm8iLCJhIjoiY2ppNDIzYmlkMDRydDNsbWkwNmlja3pwdyJ9.WeHG_FIHQZAY790UdZQGFw',
+                maxZoom: 8,
+                minZoom: 5
+            }).addTo(map);
+
+            var info = L.control();
+
+            info.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+                this.update();
+                return this._div;
+            };
+
+            // method that we will use to update the control based on feature properties passed
+            info.update = function (props) {
+                this._div.innerHTML = '<h4>Texas County</h4>' +  (props ?
+                    '<b>' + props.COUNTY + '</b><br />' + props.SQUARE_MIL + ' square miles'
+                    : 'select a county');
+            };
+
+        info.addTo(map);
+
+           function getColor(d) {
+            return d > 5000   ? '#67000d' :
+                   d > 3500   ? '#a50f15' :
+                   d > 2000   ? '#cb181d' :
+                   d > 1500   ? '#ef3b2c' :
+                   d > 1000   ? '#fb6a4a' :
+                   d > 800    ? '#fc9272' :
+                   d > 500    ? '#fcbba1' :
+                   d > 200    ? '#fee0d2' :
+                                '#fff5f0';
+            }
+
+            function style(feature) {
+            return {
+                fillColor: getColor(feature.properties.SQUARE_MIL),
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+                };
+            }
+
+        L.geoJson(countiesData, {style: style}).addTo(map);
+
+        var selected;
+        function highlightFeature(e) {
+            var layer = e.target;
+
+            layer.setStyle({
+                weight: 5,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.7
+            });
+
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+            info.update(layer.feature.properties);
+        }
+
+        var geojson;
+
+        function resetHighlight(e) {
+            geojson.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            var layer = e.target
+            map.fitBounds(layer.getBounds());
+            selected = layer.feature.properties.COUNTY;
+        }
+
+        function onEachFeature(feature, layer) {
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: zoomToFeature
+            });
+            layer.bindPopup(layer.feature.properties.COUNTY)
+        }
+
+        geojson = L.geoJson(countiesData, {
+            style: style,
+            onEachFeature: onEachFeature
+        }).addTo(map);
+        </script>
+
+</body>
+</html>
